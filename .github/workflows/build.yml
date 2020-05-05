@@ -1,0 +1,43 @@
+on:
+  - push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: www
+    name: Build Gatsby site
+    steps:
+      - uses: actions/checkout@v2
+      - name: Yarn cache directory
+        id: yarn-cache-dir
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+      - name: Gatsby Cache Folder
+        uses: actions/cache@v1
+        with:
+          key: gatsby-cache-dir
+          path: www/.cache
+          restore-keys: |
+            gatsby-cache-dir
+      - name: Gatsby Public Folder
+        uses: actions/cache@v1
+        with:
+          key: gatsby-public-dir
+          path: www/public
+          restore-keys: |
+            gatsby-public-dir
+      - name: Yarn cache
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - name: Yarn install
+        run: 'yarn install --pure-lockfile'
+      - name: Build app
+        run: 'yarn run build:incremental'
+        env:
+          GATSBY_SCREENSHOT_PLACEHOLDER: true
+          GITHUB_API_TOKEN: ${{ secrets.githubApiToken }}
